@@ -1,0 +1,39 @@
+name: box
+
+on:
+  workflow_dispatch:
+    inputs:
+      cmd:
+        description: 'Command to run inside the box'
+        required: false
+        default: 'echo hello'
+
+jobs:
+  box:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Specs and run command
+        shell: bash
+        env:
+          CMD: ${{ inputs.cmd }}
+        run: |
+          set +e
+          {
+            echo '=== SPECS ==='
+            nproc
+            free -h
+            df -h /
+            python3 --version
+            ffmpeg -version | head -1
+            curl -sI https://pypi.org | head -1
+            echo '=== CMD ==='
+            echo "$CMD"
+            echo '=== CMD OUTPUT ==='
+            bash -c "$CMD"
+            echo "cmd_exit=$?"
+          } 2>&1 | tee box-output.txt
+      - name: Upload output artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: box-output
+          path: box-output.txt
